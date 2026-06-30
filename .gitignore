@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.tmp
+*.tmp.*
+
+# Local-only docs - synced scaffolds (.claude/rules/) and internal docs, never committed (see docs/SETUP.md)
+/.claude/
+/docs/
