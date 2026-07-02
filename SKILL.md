@@ -22,6 +22,10 @@ so the precise state you choose survives either path — then you can use `/clea
   leaner steady state, not zero cost.
 
 ## Steps (run on invocation)
+
+`/handoff` takes an optional verb — dispatch on it first:
+
+### `/handoff` (no argument) — WRITE the handoff (the default, frequent path)
 1. **Write `~/.claude/handoffs/handoff.md`** from the template at
    `~/.claude/skills/handoff/handoff.md`. Fill ONLY high-value slots from THIS
    session; omit empty slots. Rule: include a line only if a lossy summary would
@@ -34,7 +38,23 @@ so the precise state you choose survives either path — then you can use `/clea
    >
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
    > new context and archives the file — I'll resume from it, no action needed. If the
-   > hook isn't installed, say "read ~/.claude/handoffs/handoff.md and resume".
+   > hook didn't fire (not installed, or you opened a fresh session instead of
+   > `/clear`|`/compact`), run `/handoff resume` to resume from it and archive it.
+
+### `/handoff resume` — resume from a pending handoff in THIS session
+Use when a handoff was written but the auto-resume hook did NOT fire — e.g. you started a
+fresh session (source=startup) rather than `/clear` or `/compact`, so the hook skipped and
+`handoff.md` still lingers.
+1. Run the hook in manual mode — it archives the pending handoff (so it can't linger and be
+   silently re-injected by a later compression) and prints its content:
+   `python "$HOME/.claude/skills/handoff/scripts/resume.py" --consume`
+   (Windows: `python "%USERPROFILE%\.claude\skills\handoff\scripts\resume.py" --consume`)
+2. Resume the task from the printed content. If it prints "No pending handoff", tell the user.
+
+### `/handoff clear` — discard a pending handoff without resuming
+Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
+1. Run: `python "$HOME/.claude/skills/handoff/scripts/resume.py" --discard` — it archives the
+   pending file (or removes it if empty) and prints a one-line status. Report that status.
 
 ## Hard rules
 - **User-invoked only** — act on this skill ONLY when the user runs `/handoff`. Never
@@ -48,6 +68,8 @@ so the precise state you choose survives either path — then you can use `/clea
   task boundaries to keep the window under the auto threshold so auto never fires.
 - **Write it at the boundary, not ahead**: if you `/handoff` then keep working before
   `/clear`/`/compact`, the injected handoff is stale — re-run `/handoff` just before
-  compressing. A handoff older than 24h is not auto-resumed: the hook asks you first
-  whether to use it or discard it (no silent drop).
+  compressing. The hook auto-resumes only a FRESH handoff (≤10 min); an older one is
+  archived and the hook ASKS first whether to resume it (default-to-stop, never a silent
+  inject). A handoff written but never compressed won't linger dangerously — the next
+  `/clear`|`/compact` archives it (and asks), or clear it now with `/handoff clear`.
 - If nothing this session is critical to preserve verbatim (short/routine work), say so and skip it.

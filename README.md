@@ -30,6 +30,14 @@ skips the summary-generation call and keeps every later turn lean (no summary bl
 lingering in context). Use `/compact` instead if you're unsure what you left out — it
 keeps a summary safety net.
 
+### Commands
+
+| Command | What it does |
+|---|---|
+| `/handoff` | Write the pre-compression handoff, then you `/clear` or `/compact`. |
+| `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, so the hook never fired. |
+| `/handoff clear` | Archive (discard) a pending handoff without resuming. |
+
 ## How it works
 
 ```
@@ -45,22 +53,30 @@ keeps a summary safety net.
             │ yes
    pending handoff at ~/.claude/handoffs/handoff.md ?  ─ no ─→  skip
             │ yes
-   age ≤ 24h ?
-     ├─ yes → os.replace() the file to <timestamp>_<task>.md  (atomic claim)
-     │        └─ print its content to stdout → injected into new context → auto-resume
-     └─ no  → leave the file; print an ASK prompt → Claude asks you: resume or discard?
+   os.replace() the file to <timestamp>_<task>.md   (atomic claim — ALWAYS, consume-once)
+            │
+   age ≤ 10 min ?
+     ├─ yes → print its content to stdout → injected into new context → auto-resume
+     └─ no  → print an ASK prompt (names the archived path) → Claude asks you:
+              resume from it, or ignore? (default-to-stop; archived either way)
 ```
+
+If you open a fresh session instead of `/clear`/`/compact`, the hook is source-gated away
+(startup ≠ clear/compact) and the handoff lingers. `/handoff resume` runs that same
+archive-and-print path manually (`resume.py --consume`); `/handoff clear` archives it
+without resuming (`resume.py --discard`).
 
 Three properties make the hook safe to fire on every start:
 
-- **Source-gated** — only `/clear` and `/compact` act. Plain startup/resume, or a
+- **Source-gated** — only `/clear` and `/compact` auto-act. Plain startup/resume, or a
   missing/unparseable SessionStart payload, skip. Fail closed.
-- **Consume-once** — the `os.replace` to the archive path *is* the claim. If two starts
-  race, the loser's `replace` fails and it emits nothing — no double-injection. The
-  hook does not rely on Claude deleting anything.
-- **Stale ≠ silent drop** — a handoff older than 24h is not auto-applied; the hook asks
-  you first whether to resume from it or discard it. Possibly-stale state is never
-  injected silently.
+- **Consume-once, always** — on any `/clear`/`/compact` start the `os.replace` to the
+  archive runs *before* the age decision, so a pending handoff is claimed exactly once and
+  can never be left behind to be silently re-injected by a later unrelated compression. If
+  two starts race, the loser's `replace` fails and it emits nothing.
+- **Older ≠ silent inject** — only a fresh handoff (≤10 min, i.e. the `/handoff`→compress
+  boundary) auto-resumes. An older one is archived and the hook ASKS first (default-to-stop).
+  Possibly-mismatched state is never injected silently.
 
 ## Files
 
@@ -79,7 +95,8 @@ Runtime state lives outside the skill, at `~/.claude/handoffs/`:
 - `handoff.md` — the single pending handoff (fixed path, not per-session: `/clear` may
   start a new session id, so the hook must look somewhere session-independent). Present
   only between a `/handoff` and the next compression.
-- `<YYYY-MM-DD-HH-MM-SS>_<task-slug>.md` — archived handoffs, one per consumed resume.
+- `<YYYY-MM-DD-HH-MM-SS>_<task-slug>.md` — archived handoffs, one per consumed handoff
+  (auto-resume, the ask path, or a manual `/handoff resume`|`/handoff clear`).
 
 ## Install
 
@@ -143,7 +160,7 @@ python -c "import json,pathlib; p=pathlib.Path.home()/'.claude'/'settings.json';
 Expect `registered`. Then exercise the hook logic directly:
 
 ```
-python scripts/resume.py --selftest      # dispatch / fresh / stale / emit / slug
+python scripts/resume.py --selftest      # dispatch / fresh / old / consume / discard / slug
 ```
 
 Expect `selftest ok`. For a full end-to-end check, run `/handoff` in a session, then
