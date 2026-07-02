@@ -1,6 +1,7 @@
 ---
 name: handoff
 description: Before the user compresses the context window with /clear or /compact, write a verbatim handoff of the selected critical state a summary would corrupt — exact IDs, cursor, decisions, gotchas, next action — to ~/.claude/handoffs/handoff.md; a SessionStart hook (if installed) re-injects it into the new context and archives it. Invoke ONLY when the user explicitly runs /handoff — never auto-fire. Does NOT clear/compact itself (only the user can).
+argument-hint: "[resume|clear]"
 ---
 
 # /handoff — verbatim state handoff before /clear or /compact
