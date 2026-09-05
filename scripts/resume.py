@@ -14,8 +14,8 @@ the new context:
 
 The skill also drives two manual subcommands (any age, no source gate) — for the case
 where a fresh session (source=startup) skipped the hook, so the handoff still lingers:
-    python resume.py --consume   # /handoff resume: archive pending + print its content
-    python resume.py --discard   # /handoff clear:  archive pending, nothing to resume
+    python resume.py --consume   # /handoff resume:  archive pending + print its content
+    python resume.py --discard   # /handoff discard: archive pending, nothing to resume
 
 Design notes:
 - Source-gated: only /clear and /compact auto-act. Other starts (startup/resume) and
@@ -162,7 +162,7 @@ def consume_now(pending=PENDING):
 
 
 def discard_now(pending=PENDING):
-    """Manual `/handoff clear`: archive the pending handoff without resuming (or remove it
+    """Manual `/handoff discard`: archive the pending handoff without resuming (or remove it
     if empty/undecodable). Returns a one-line status string for the user."""
     if os.path.islink(pending):
         return "Refusing to touch a symlinked handoff path."
@@ -170,18 +170,18 @@ def discard_now(pending=PENDING):
         with open(pending, encoding="utf-8") as f:
             content = f.read()
     except OSError:
-        return "No pending handoff to clear."
+        return "No pending handoff to discard."
     except UnicodeError:
         content = ""                     # undecodable: treat as nothing worth archiving
     if content.strip():
         archive = _archive(pending, content)
-        return (f"Cleared the pending handoff (archived to {archive})."
-                if archive else "Could not clear the handoff (already gone?).")
+        return (f"Discarded the pending handoff (archived to {archive})."
+                if archive else "Could not discard the handoff (already gone?).")
     try:
         os.remove(pending)               # empty/undecodable: nothing worth preserving
         return "Removed an empty pending handoff."
     except OSError:
-        return "No pending handoff to clear."
+        return "No pending handoff to discard."
 
 
 def emit(text, out=None):
@@ -195,8 +195,8 @@ def main():
     if "--consume" in sys.argv:          # /handoff resume — manual, any age, no source gate
         emit(consume_now() or "No pending handoff to resume.")
         return
-    if "--discard" in sys.argv:          # /handoff clear — manual archive / cleanup
-        emit(discard_now() or "No pending handoff to clear.")
+    if "--discard" in sys.argv:          # /handoff discard — manual archive / cleanup
+        emit(discard_now() or "No pending handoff to discard.")
         return
     source = None
     if not sys.stdin.isatty():           # piped JSON in the hook; a tty = manual run, don't block
@@ -259,7 +259,7 @@ def _selftest():
     assert not os.path.exists(pending), "consume_now archives"
     assert any(n.endswith("_manual-resume-task.md") for n in os.listdir(d)), "consume_now archived w/ slug"
     assert consume_now(pending) is None, "consume_now on missing -> None"
-    # --discard (/handoff clear): archives without resuming; empty -> removed; missing -> message
+    # --discard (/handoff discard): archives without resuming; empty -> removed; missing -> message
     write("# Discard me\nstate")
     st = discard_now(pending)
     assert "archived" in st.lower() and not os.path.exists(pending), "discard archives, no content resumed"

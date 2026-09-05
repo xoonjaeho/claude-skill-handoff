@@ -1,7 +1,7 @@
 ---
 name: handoff
 description: Before the user compresses the context window with /clear or /compact, write a verbatim handoff of the selected critical state a summary would corrupt — exact IDs, cursor, decisions, gotchas, next action — to ~/.claude/handoffs/handoff.md; a SessionStart hook (if installed) re-injects it into the new context and archives it. Invoke ONLY when the user explicitly runs /handoff — never auto-fire. Does NOT clear/compact itself (only the user can).
-argument-hint: "[resume|clear]"
+argument-hint: "[resume|discard]"
 ---
 
 # /handoff — verbatim state handoff before /clear or /compact
@@ -33,7 +33,7 @@ so the precise state you choose survives either path — then you can use `/clea
    > A handoff is already pending: `<its first line>`. Writing a new one overwrites it.
    > Archive it first and continue? (No = I stop; `/handoff resume` recovers it.)
 
-   On yes, run `resume.py --discard` (paths as in `/handoff clear` below), report the
+   On yes, run `resume.py --discard` (paths as in `/handoff discard` below), report the
    archive path it prints, then continue. On no, stop — write nothing.
 2. **Write `~/.claude/handoffs/handoff.md`** from the template at
    `~/.claude/skills/handoff/handoff.md`. Fill ONLY high-value slots from THIS
@@ -60,7 +60,7 @@ fresh session (source=startup) rather than `/clear` or `/compact`, so the hook s
    (Windows: `python "%USERPROFILE%\.claude\skills\handoff\scripts\resume.py" --consume`)
 2. Resume the task from the printed content. If it prints "No pending handoff", tell the user.
 
-### `/handoff clear` — discard a pending handoff without resuming
+### `/handoff discard` — archive a pending handoff without resuming
 Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
 1. Run: `python "$HOME/.claude/skills/handoff/scripts/resume.py" --discard` — it archives the
    pending file (or removes it if empty) and prints a one-line status. Report that status.
@@ -81,5 +81,5 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
   archived and the hook ASKS first whether to resume it (default-to-stop, never a silent
   inject). A handoff written but never compressed won't linger dangerously — the next
   `/clear`|`/compact` archives it (and asks), a later `/handoff` asks before overwriting
-  it, or clear it now with `/handoff clear`.
+  it, or discard it now with `/handoff discard`.
 - If nothing this session is critical to preserve verbatim (short/routine work), say so and skip it.

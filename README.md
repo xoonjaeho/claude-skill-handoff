@@ -36,7 +36,7 @@ keeps a summary safety net.
 |---|---|
 | `/handoff` | Write the pre-compression handoff, then you `/clear` or `/compact`. Asks first if one is already pending, and archives it on approval. |
 | `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, so the hook never fired. |
-| `/handoff clear` | Archive (discard) a pending handoff without resuming. |
+| `/handoff discard` | Archive a pending handoff without resuming. |
 
 ## How it works
 
@@ -63,7 +63,7 @@ keeps a summary safety net.
 
 If you open a fresh session instead of `/clear`/`/compact`, the hook is source-gated away
 (startup ≠ clear/compact) and the handoff lingers. `/handoff resume` runs that same
-archive-and-print path manually (`resume.py --consume`); `/handoff clear` archives it
+archive-and-print path manually (`resume.py --consume`); `/handoff discard` archives it
 without resuming (`resume.py --discard`).
 
 Three properties make the hook safe to fire on every start:
@@ -96,7 +96,7 @@ Runtime state lives outside the skill, at `~/.claude/handoffs/`:
   start a new session id, so the hook must look somewhere session-independent). Present
   only between a `/handoff` and the next compression.
 - `<YYYY-MM-DD-HH-MM-SS>_<task-slug>.md` — archived handoffs, one per consumed handoff
-  (auto-resume, the ask path, or a manual `/handoff resume`|`/handoff clear`).
+  (auto-resume, the ask path, or a manual `/handoff resume`|`/handoff discard`).
 
 ## Install
 
