@@ -27,12 +27,20 @@ so the precise state you choose survives either path — then you can use `/clea
 `/handoff` takes an optional verb — dispatch on it first:
 
 ### `/handoff` (no argument) — WRITE the handoff (the default, frequent path)
-1. **Write `~/.claude/handoffs/handoff.md`** from the template at
+1. **Check for a pending handoff first** — read `~/.claude/handoffs/handoff.md`. If it
+   exists and is non-empty, writing overwrites it with no backup: the path is fixed and
+   only the consume paths archive. Ask before continuing, quoting its first line:
+   > A handoff is already pending: `<its first line>`. Writing a new one overwrites it.
+   > Archive it first and continue? (No = I stop; `/handoff resume` recovers it.)
+
+   On yes, run `resume.py --discard` (paths as in `/handoff clear` below), report the
+   archive path it prints, then continue. On no, stop — write nothing.
+2. **Write `~/.claude/handoffs/handoff.md`** from the template at
    `~/.claude/skills/handoff/handoff.md`. Fill ONLY high-value slots from THIS
    session; omit empty slots. Rule: include a line only if a lossy summary would
    corrupt or drop it. Point to disk state — never transcribe it. Keep it under ~40
    lines. The first line `# <task>` becomes the archive filename.
-2. **Tell the user, verbatim:**
+3. **Tell the user, verbatim:**
    > handoff written. Now compress the window:
    > • `/clear` — no summary call, leaner. Use when the handoff is complete for what's next.
    > • `/compact` — keeps a summary safety net. Use if unsure what you left out.
@@ -72,5 +80,6 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
   compressing. The hook auto-resumes only a FRESH handoff (≤10 min); an older one is
   archived and the hook ASKS first whether to resume it (default-to-stop, never a silent
   inject). A handoff written but never compressed won't linger dangerously — the next
-  `/clear`|`/compact` archives it (and asks), or clear it now with `/handoff clear`.
+  `/clear`|`/compact` archives it (and asks), a later `/handoff` asks before overwriting
+  it, or clear it now with `/handoff clear`.
 - If nothing this session is critical to preserve verbatim (short/routine work), say so and skip it.

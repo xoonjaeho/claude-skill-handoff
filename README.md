@@ -34,7 +34,7 @@ keeps a summary safety net.
 
 | Command | What it does |
 |---|---|
-| `/handoff` | Write the pre-compression handoff, then you `/clear` or `/compact`. |
+| `/handoff` | Write the pre-compression handoff, then you `/clear` or `/compact`. Asks first if one is already pending, and archives it on approval. |
 | `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, so the hook never fired. |
 | `/handoff clear` | Archive (discard) a pending handoff without resuming. |
 
@@ -181,8 +181,8 @@ Either:
 - **Selective, not total** — the handoff holds only what a summary can't be trusted
   with. It is not a transcript; `/compact` stays the option when you're unsure what you
   left out.
-- **Single pending slot** — one `handoff.md` at a time. Writing a new one before the
-  previous is consumed overwrites it.
+- **Single pending slot** — one `handoff.md` at a time. `/handoff` asks before overwriting
+  a still-pending one and archives it on approval; nothing else backs it up.
 - **Write at the boundary, not ahead** — if you `/handoff` then keep working before
   compressing, the injected handoff is stale. Re-run `/handoff` just before `/clear`.
 
