@@ -69,7 +69,7 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
 - **User-invoked only** — act on this skill ONLY when the user runs `/handoff`. Never
   auto-fire: it writes a file and tells the user to compress the window.
 - **Never run `/clear` or `/compact` yourself** — built-in commands aren't model-invocable.
-  Stop after step 2; the user triggers it.
+  Stop after step 3; the user triggers it.
 - **`/clear` has no safety net** — recommend it only when the handoff fully covers the
   next step; otherwise `/compact`.
 - **Manual-only by nature**: can't protect *auto*-compaction (you can't invoke it before

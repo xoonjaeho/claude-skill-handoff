@@ -7,7 +7,7 @@ it. Keep the filled file under ~40 lines. The first line `# <task>` becomes the
 archive filename slug, so make it a concise task description.
 -->
 # <task in one line>
-> After a manual /clear or /compact, the SessionStart hook (if installed) auto-injects this and archives it when under 24h old; if older, it asks you first whether to use it. On resume, open the Pointers' real files to verify before continuing.
+> After a manual /clear or /compact, the SessionStart hook (if installed) auto-injects this and archives it when under 10 min old; if older, it asks you first whether to use it. On resume, open the Pointers' real files to verify before continuing.
 
 ## Cursor — where I am
 - In progress: <step N/M, what is half-done>
