@@ -20,3 +20,8 @@ Thumbs.db
 # Local-only docs - synced scaffolds (.claude/rules/) and internal docs, never committed (see docs/SETUP.md)
 /.claude/
 /docs/
+
+# >>> scaffolds >>>
+# Serena MCP writes this on project activation
+.serena/
+# <<< scaffolds <<<
