@@ -1,7 +1,7 @@
 ---
 name: handoff
-description: Before the user compresses the context window with /clear or /compact, write a verbatim handoff of the selected critical state a summary would corrupt — exact IDs, cursor, decisions, gotchas, next action — to ~/.claude/handoffs/handoff.md; a SessionStart hook (if installed) re-injects it into the new context and archives it. Invoke ONLY when the user explicitly runs /handoff — never auto-fire. Does NOT clear/compact itself (only the user can).
-argument-hint: "[resume|discard]"
+description: Before the user compresses the context window with /clear or /compact, write a verbatim handoff of the selected critical state a summary would corrupt — exact IDs, cursor, decisions, gotchas, next action — to ~/.claude/handoffs/handoff.md; a SessionStart hook (if installed) re-injects it into the new context and archives it. Invoke ONLY when the user explicitly runs /handoff or asks for a handoff — never auto-fire. Does NOT clear/compact itself (only the user can).
+argument-hint: "[resume|park|discard]"
 ---
 
 # /handoff — verbatim state handoff before /clear or /compact
@@ -60,14 +60,21 @@ fresh session (source=startup) rather than `/clear` or `/compact`, so the hook s
    (Windows: `python "%USERPROFILE%\.claude\skills\handoff\scripts\resume.py" --consume`)
 2. Resume the task from the printed content. If it prints "No pending handoff", tell the user.
 
+### `/handoff park` — WRITE a handoff another session will pick up
+Use when the user asks for a handoff "for the next session" rather than for a `/clear`|`/compact`
+of this one. The pending path is wrong here: the next compression in any session would inject it.
+1. Write the same template straight to the archive name, never to `handoff.md`:
+   `~/.claude/handoffs/<YYYY-MM-DD-HH-MM-SS>_<slug>.md`, the name `resume.py` `_archive` would give it.
+2. Tell the user the full filename. They open the next session with `resume with "<file>"`.
+
 ### `/handoff discard` — archive a pending handoff without resuming
 Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
 1. Run: `python "$HOME/.claude/skills/handoff/scripts/resume.py" --discard` — it archives the
    pending file (or removes it if empty) and prints a one-line status. Report that status.
 
 ## Hard rules
-- **User-invoked only** — act on this skill ONLY when the user runs `/handoff`. Never
-  auto-fire: it writes a file and tells the user to compress the window.
+- **User-requested only** — act on this skill ONLY when the user runs `/handoff` or asks for
+  a handoff in words. Never auto-fire: it writes a file and tells the user to compress the window.
 - **Never run `/clear` or `/compact` yourself** — built-in commands aren't model-invocable.
   Stop after step 3; the user triggers it.
 - **`/clear` has no safety net** — recommend it only when the handoff fully covers the
@@ -82,4 +89,8 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
   inject). A handoff written but never compressed won't linger dangerously — the next
   `/clear`|`/compact` archives it (and asks), a later `/handoff` asks before overwriting
   it, or discard it now with `/handoff discard`.
+- **Open decisions stay open**: describe the problem, its evidence and the candidate fixes; mark
+  a fix as decided only if the user decided it. The receiving session chooses.
+- **Next-session work is explicit**: a handoff written for another session lists the tasks that
+  session runs, in order, with the procedure to follow if it differs from the default.
 - If nothing this session is critical to preserve verbatim (short/routine work), say so and skip it.
