@@ -65,7 +65,7 @@ Use when the user asks for a handoff "for the next session" rather than for a `/
 of this one. The pending path is wrong here: the next compression in any session would inject it.
 1. Write the same template straight to the archive name, never to `handoff.md`:
    `~/.claude/handoffs/<YYYY-MM-DD-HH-MM-SS>_<slug>.md`, the name `resume.py` `_archive` would give it.
-2. Tell the user the full filename. They open the next session with `resume with "<file>"`.
+2. Tell the user the full filename. They open the next session with `resume from "<file>"`.
 
 ### `/handoff discard` — archive a pending handoff without resuming
 Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
