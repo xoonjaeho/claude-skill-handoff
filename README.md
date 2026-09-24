@@ -28,13 +28,14 @@ With the hook installed, the full proactive loop is:
 `/clear` is preferred over `/compact` when the handoff fully covers what's next: it
 skips the summary-generation call and keeps every later turn lean (no summary blob
 lingering in context). Use `/compact` instead if you're unsure what you left out — it
-keeps a summary safety net.
+keeps a summary safety net. `/handoff` recommends one of the two with a reason; for
+`/compact` it also gives a ready-to-paste `/compact <focus>` line.
 
 ### Commands
 
 | Command | What it does |
 |---|---|
-| `/handoff` | Write the pre-compression handoff, then you `/clear` or `/compact`. Asks first if one is already pending, and archives it on approval. |
+| `/handoff` | Write the pre-compression handoff and recommend `/clear` or `/compact <focus>`; you run it. Asks first if one is already pending, and archives it on approval. |
 | `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, so the hook never fired. |
 | `/handoff park` | Write a handoff for **another** session straight to its archive name (never the pending `handoff.md`) and report the filename; open that session with `resume from "<file>"`. |
 | `/handoff discard` | Archive a pending handoff without resuming. |

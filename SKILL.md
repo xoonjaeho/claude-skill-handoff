@@ -40,11 +40,14 @@ so the precise state you choose survives either path — then you can use `/clea
    session; omit empty slots. Rule: include a line only if a lossy summary would
    corrupt or drop it. Point to disk state — never transcribe it. Keep it under ~40
    lines. The first line `# <task>` becomes the archive filename.
-3. **Tell the user, verbatim:**
-   > handoff written. Now compress the window:
-   > • `/clear` — no summary call, leaner. Use when the handoff is complete for what's next.
-   > • `/compact` — keeps a summary safety net. Use if unsure what you left out.
-   >
+3. **Pick one command and tell the user.** Recommend exactly one, with a one-line reason:
+   - `/clear` — at a task boundary, when the handoff alone covers the next step.
+   - `/compact <focus>` — mid-task, when the conversation holds context the handoff
+     does not (reasoning, discussion the user may refer back to), or when unsure what
+     you left out. Write the `<focus>` from this session: what the summary must keep,
+     and that the handoff already carries its content verbatim.
+
+   Then tell the user, verbatim:
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
    > new context and archives the file — I'll resume from it, no action needed. If the
    > hook didn't fire (not installed, or you opened a fresh session instead of
