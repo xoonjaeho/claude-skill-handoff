@@ -41,11 +41,12 @@ so the precise state you choose survives either path — then you can use `/clea
    corrupt or drop it. Point to disk state — never transcribe it. Keep it under ~40
    lines. The first line `# <task>` becomes the archive filename.
 3. **Pick one command and tell the user.** Recommend exactly one, with a one-line reason:
-   - `/clear` — when the handoff alone covers the next step.
+   - `/clear` — when the handoff alone covers the next step and nothing else in the
+     conversation is needed later.
    - `/compact <focus>` — otherwise: the conversation holds context the handoff does not
      (reasoning, discussion the user may refer back to), or you are unsure what you
-     left out. Write the `<focus>` from this session: what the summary must keep,
-     including the handoff's path and content — the hook may not re-inject it.
+     left out. Write the `<focus>` from this session as one line: what the summary must
+     keep, including the handoff's content — the hook may not re-inject it.
 
    Then tell the user, verbatim:
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
