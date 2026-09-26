@@ -85,7 +85,7 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
 - **`/clear` has no safety net** — recommend it only when the handoff fully covers the
   next step; otherwise `/compact`.
 - **Manual-only by nature**: can't protect *auto*-compaction (you can't invoke it before
-  an unseen compaction). For precision work, run `/handoff` + `/clear` proactively at
+  an unseen compaction). For precision work, suggest `/handoff` + `/clear` to the user at
   task boundaries to keep the window under the auto threshold so auto never fires.
 - **Write it at the boundary, not ahead**: if you `/handoff` then keep working before
   `/clear`/`/compact`, the injected handoff is stale — re-run `/handoff` just before
