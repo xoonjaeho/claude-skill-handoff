@@ -196,6 +196,10 @@ Either:
 - **Directory, not session** — the hook tells sessions apart only by directory. Two
   concurrent sessions in the SAME directory are not distinguished: a `/clear` in either
   within 10 minutes auto-resumes the other's handoff.
+- **Desktop app: `/compact` only** — in the Claude desktop app `/clear` starts no
+  SessionStart, so the hook never runs there (measured; `/compact` does run it).
+  `--publish` adds a note when `CLAUDE_CODE_ENTRYPOINT=claude-desktop`, and the skill
+  then recommends `/compact`; after a `/clear` there, run `/handoff resume`.
 - **Write at the boundary, not ahead** — if you `/handoff` then keep working before
   compressing, the injected handoff is stale. Re-run `/handoff` just before `/clear`.
 

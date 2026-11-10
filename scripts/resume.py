@@ -53,6 +53,9 @@ PENDING_TMP = PENDING + ".tmp"
 AUTO_RESUME_MAX_MIN = 10                  # <= this (minutes): auto-resume; older: ask the user first
 CONSUME_SOURCES = {"clear", "compact"}
 CWD_MARK, CWD_MARK_END = "<!-- handoff-cwd: ", " -->"
+# Measured 2026-11-10: the desktop app's /clear starts no SessionStart, only /compact does.
+DESKTOP_NOTE = ("Desktop app: /clear does not run the SessionStart hook here — "
+                "recommend /compact, or /handoff resume after /clear.")
 
 
 def should_consume(source):
@@ -277,10 +280,13 @@ def _read_tmp(tmp):
     return content, None
 
 
-def publish_now(tmp=PENDING_TMP, pending=PENDING):
+def publish_now(tmp=PENDING_TMP, pending=PENDING, entrypoint=None):
     """`/handoff` step 2: stamp the current directory on the tmp handoff and atomically
-    move it to the pending path. Returns (exit code, one-line status); on refusal the
-    tmp file is left in place."""
+    move it to the pending path. Returns (exit code, status); on refusal the tmp file is
+    left in place. `entrypoint` defaults to $CLAUDE_CODE_ENTRYPOINT; for the desktop app
+    the status adds DESKTOP_NOTE."""
+    if entrypoint is None:
+        entrypoint = os.environ.get("CLAUDE_CODE_ENTRYPOINT", "")
     content, refusal = _read_tmp(tmp)
     if refusal:
         return 1, refusal
@@ -293,7 +299,8 @@ def publish_now(tmp=PENDING_TMP, pending=PENDING):
         os.replace(tmp, pending)
     except OSError as e:
         return 1, f"Could not publish {tmp}: {e}"
-    return 0, f"Published the handoff to {pending}."
+    status = f"Published the handoff to {pending}."
+    return 0, status + (" " + DESKTOP_NOTE if entrypoint == "claude-desktop" else "")
 
 
 def park_now(tmp=PENDING_TMP):
@@ -418,6 +425,10 @@ def _selftest_in(d):
     assert code == 0 and not os.path.exists(tmp), f"publish moves tmp: {st}"
     assert read(pending).split("\n", 1)[0] == f"<!-- handoff-cwd: {os.getcwd()} -->", "publish stamps cwd"
     assert pending_message(pending, cwd=os.getcwd()).startswith("Resuming"), "published handoff resumes in its dir"
+    for entry, noted in (("claude-desktop", True), ("cli", False)):
+        write("# Entry note\nx", path=tmp)
+        code, st = publish_now(tmp, os.path.join(d, f"pending-{entry}.md"), entrypoint=entry)
+        assert code == 0 and (DESKTOP_NOTE in st) == noted, f"desktop note only for the app: {entry}: {st}"
     # --park: tmp goes straight to an archive name, never to pending
     write("# Parked task\nstate", path=tmp)
     code, st = park_now(tmp)

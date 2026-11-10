@@ -56,6 +56,8 @@ so the precise state you choose survives either path — then you can use `/clea
      (reasoning, discussion the user may refer back to), or you are unsure what you
      left out. Write the `<focus>` from this session as one line: what the summary must
      keep, including the handoff's content — the hook may not re-inject it.
+   - If `--publish` printed `Desktop app: …`, recommend `/compact <focus>` even when `/clear`
+     would fit: in the desktop app `/clear` does not run the hook.
 
    Then tell the user, verbatim:
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
