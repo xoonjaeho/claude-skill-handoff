@@ -44,8 +44,10 @@ keeps a summary safety net. `/handoff` recommends one of the two with a reason; 
 
 ```
 [invocation]   /handoff
-   └─ Claude writes ~/.claude/handoffs/handoff.md from the template,
+   └─ Claude writes ~/.claude/handoffs/handoff.md.tmp from the template,
       filling ONLY slots a lossy summary would corrupt (selective, not total)
+   └─ resume.py --publish stamps the session directory on line 1 and atomically
+      renames the tmp to handoff.md (refuses if one is already pending)
 
 [you compress]   /clear  (or /compact)
    └─ a new context starts → SessionStart hook fires (scripts/resume.py)
@@ -55,11 +57,13 @@ keeps a summary safety net. `/handoff` recommends one of the two with a reason; 
             │ yes
    pending handoff at ~/.claude/handoffs/handoff.md ?  ─ no ─→  skip
             │ yes
+   non-empty and valid UTF-8 ?  ─ no ─→  skip (left in place)
+            │ yes
    os.replace() the file to <timestamp>_<task>.md   (atomic claim — ALWAYS, consume-once)
             │
-   age ≤ 10 min ?
+   0 ≤ age ≤ 10 min  AND  stamped directory == the payload's cwd ?
      ├─ yes → print its content to stdout → injected into new context → auto-resume
-     └─ no  → print an ASK prompt (names the archived path) → Claude asks you:
+     └─ no  → print an ASK prompt (reason + archived path) → Claude asks you:
               resume from it, or ignore? (default-to-stop; archived either way)
 ```
 
@@ -76,9 +80,11 @@ Three properties make the hook safe to fire on every start:
   archive runs *before* the age decision, so a pending handoff is claimed exactly once and
   can never be left behind to be silently re-injected by a later unrelated compression. If
   two starts race, the loser's `replace` fails and it emits nothing.
-- **Older ≠ silent inject** — only a fresh handoff (≤10 min, i.e. the `/handoff`→compress
-  boundary) auto-resumes. An older one is archived and the hook ASKS first (default-to-stop).
-  Possibly-mismatched state is never injected silently.
+- **Older or elsewhere ≠ silent inject** — only a fresh handoff (≤10 min, i.e. the
+  `/handoff`→compress boundary) written in the same directory as the new session
+  auto-resumes. Any other is archived and the hook ASKS first (default-to-stop), so a
+  `/clear` in another project never picks up this one's handoff. Possibly-mismatched
+  state is never injected silently.
 
 ## Files
 
@@ -97,6 +103,8 @@ Runtime state lives outside the skill, at `~/.claude/handoffs/`:
 - `handoff.md` — the single pending handoff (fixed path, not per-session: `/clear` may
   start a new session id, so the hook must look somewhere session-independent). Present
   only between a `/handoff` and the next compression.
+- `handoff.md.tmp` — the handoff as Claude writes it, before `--publish` (or `--park`)
+  moves it. Left in place only when a publish was refused.
 - `<YYYY-MM-DD-HH-MM-SS>_<task-slug>.md` — archived handoffs, one per consumed handoff
   (auto-resume, the ask path, or a manual `/handoff resume`|`/handoff discard`).
 
@@ -126,7 +134,7 @@ gate on `source` itself):
   "hooks": [
     {
       "type": "command",
-      "command": "python \"$HOME/.claude/skills/handoff/scripts/resume.py\""
+      "command": "python3 \"$HOME/.claude/skills/handoff/scripts/resume.py\""
     }
   ]
 }
@@ -162,7 +170,7 @@ python -c "import json,pathlib; p=pathlib.Path.home()/'.claude'/'settings.json';
 Expect `registered`. Then exercise the hook logic directly:
 
 ```
-python scripts/resume.py --selftest      # dispatch / fresh / old / consume / discard / slug
+python scripts/resume.py --selftest      # dispatch / cwd gate / publish / park / consume / discard
 ```
 
 Expect `selftest ok`. For a full end-to-end check, run `/handoff` in a session, then
@@ -184,7 +192,10 @@ Either:
   with. It is not a transcript; `/compact` stays the option when you're unsure what you
   left out.
 - **Single pending slot** — one `handoff.md` at a time. `/handoff` asks before overwriting
-  a still-pending one and archives it on approval; nothing else backs it up.
+  a still-pending one and archives it on approval; `--publish` refuses to replace one.
+- **Directory, not session** — the hook tells sessions apart only by directory. Two
+  concurrent sessions in the SAME directory are not distinguished: a `/clear` in either
+  within 10 minutes auto-resumes the other's handoff.
 - **Write at the boundary, not ahead** — if you `/handoff` then keep working before
   compressing, the injected handoff is stale. Re-run `/handoff` just before `/clear`.
 

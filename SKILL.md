@@ -33,13 +33,22 @@ so the precise state you choose survives either path — then you can use `/clea
    > A handoff is already pending: `<its first line>`. Writing a new one overwrites it.
    > Archive it first and continue? (No = I stop; `/handoff resume` recovers it.)
 
-   On yes, run `resume.py --discard` (paths as in `/handoff discard` below), report the
-   archive path it prints, then continue. On no, stop — write nothing.
-2. **Write `~/.claude/handoffs/handoff.md`** from the template at
+   On yes, run `python "$HOME/.claude/skills/handoff/scripts/resume.py" --discard` and
+   report the archive path it prints, then continue. If it prints no archive path, stop
+   and report its output — write nothing. On no, stop — write nothing.
+2. **Write the handoff, then publish it.** Fill the template at
    `~/.claude/skills/handoff/handoff.md`. Fill ONLY high-value slots from THIS
    session; omit empty slots. Rule: include a line only if a lossy summary would
    corrupt or drop it. Point to disk state — never transcribe it. Keep it under ~40
    lines. The first line `# <task>` becomes the archive filename.
+   - Write it with the Write tool to `~/.claude/handoffs/handoff.md.tmp` — never to
+     `handoff.md` directly. A leftover `.tmp` from a refused publish: read it first (the
+     Write tool refuses to overwrite an unread file), then overwrite it.
+   - Run `python "$HOME/.claude/skills/handoff/scripts/resume.py" --publish`. It stamps
+     the session directory on the first line (the hook auto-resumes only in that
+     directory) and moves the file to `handoff.md` in one atomic step. It refuses if a
+     handoff is already pending. If it does not print `Published the handoff to …`, stop
+     and report its output — do not go on to step 3.
 3. **Pick one command and tell the user.** Recommend exactly one, with a one-line reason:
    - `/clear` — when the handoff alone covers the next step and nothing else in the
      conversation is needed later.
@@ -51,7 +60,7 @@ so the precise state you choose survives either path — then you can use `/clea
    Then tell the user, verbatim:
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
    > new context and archives the file — I'll resume from it, no action needed (if it
-   > is over 10 minutes old, I ask you first). If the
+   > is over 10 minutes old or the new session is in another directory, I ask you first). If the
    > hook didn't fire (not installed, or you opened a fresh session instead of
    > `/clear`|`/compact`), run `/handoff resume` to resume from it and archive it.
 
@@ -62,20 +71,23 @@ fresh session (source=startup) rather than `/clear` or `/compact`, so the hook s
 1. Run the hook in manual mode — it archives the pending handoff (so it can't linger and be
    silently re-injected by a later compression) and prints its content:
    `python "$HOME/.claude/skills/handoff/scripts/resume.py" --consume`
-   (Windows: `python "%USERPROFILE%\.claude\skills\handoff\scripts\resume.py" --consume`)
-2. Resume the task from the printed content. If it prints "No pending handoff", tell the user.
+2. Resume the task from the printed content. If it prints "No pending handoff", tell the user;
+   when it also names the most recent archived handoff (the hook may have claimed it without
+   injecting it), offer to resume from that file.
 
 ### `/handoff park` — WRITE a handoff another session will pick up
 Use when the user asks for a handoff "for the next session" rather than for a `/clear`|`/compact`
 of this one. The pending path is wrong here: the next compression in any session would inject it.
-1. Write the same template straight to the archive name, never to `handoff.md`:
-   `~/.claude/handoffs/<YYYY-MM-DD-HH-MM-SS>_<slug>.md`, the name `resume.py` `_archive` would give it.
-2. Tell the user the full filename. They open the next session with `resume from "<file>"`.
+1. Write the same template with the Write tool to `~/.claude/handoffs/handoff.md.tmp`, then run
+   `python "$HOME/.claude/skills/handoff/scripts/resume.py" --park`. It moves the file straight
+   to a timestamped archive name, never to `handoff.md`, and prints that path.
+2. Tell the user the full path it printed. They open the next session with `resume from "<file>"`.
 
 ### `/handoff discard` — archive a pending handoff without resuming
 Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
 1. Run: `python "$HOME/.claude/skills/handoff/scripts/resume.py" --discard` — it archives the
-   pending file (or removes it if empty) and prints a one-line status. Report that status.
+   pending file (an undecodable one too; an empty one is removed) and prints a one-line
+   status. Report that status.
 
 ## Hard rules
 - **User-requested only** — act on this skill ONLY when the user runs `/handoff` or asks for
@@ -89,9 +101,9 @@ Use to clean up a stale or abandoned pending handoff you do NOT want to resume.
   task boundaries to keep the window under the auto threshold so auto never fires.
 - **Write it at the boundary, not ahead**: if you `/handoff` then keep working before
   `/clear`/`/compact`, the injected handoff is stale — re-run `/handoff` just before
-  compressing. The hook auto-resumes only a FRESH handoff (≤10 min); an older one is
-  archived and the hook ASKS first whether to resume it (default-to-stop, never a silent
-  inject). A handoff written but never compressed won't linger dangerously — the next
+  compressing. The hook auto-resumes only a FRESH handoff (≤10 min) written in the same
+  directory; any other is archived and the hook ASKS first whether to resume it
+  (default-to-stop, never a silent inject). A handoff written but never compressed won't linger dangerously — the next
   `/clear`|`/compact` archives it (and asks), a later `/handoff` asks before overwriting
   it, or discard it now with `/handoff discard`.
 - **Open decisions stay open**: describe the problem, its evidence and the candidate fixes; mark
