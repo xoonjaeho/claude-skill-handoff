@@ -55,7 +55,7 @@ CONSUME_SOURCES = {"clear", "compact"}
 CWD_MARK, CWD_MARK_END = "<!-- handoff-cwd: ", " -->"
 # Measured 2026-11-10: the desktop app's /clear starts no SessionStart, only /compact does.
 DESKTOP_NOTE = ("Desktop app: /clear does not run the SessionStart hook here — "
-                "recommend /compact, or /handoff resume after /clear.")
+                "after /clear, run /handoff resume; /compact runs the hook.")
 
 
 def should_consume(source):
@@ -428,7 +428,8 @@ def _selftest_in(d):
     for entry, noted in (("claude-desktop", True), ("cli", False)):
         write("# Entry note\nx", path=tmp)
         code, st = publish_now(tmp, os.path.join(d, f"pending-{entry}.md"), entrypoint=entry)
-        assert code == 0 and (DESKTOP_NOTE in st) == noted, f"desktop note only for the app: {entry}: {st}"
+        # SKILL.md step 3 keys on this literal prefix in the publish output.
+        assert code == 0 and (" Desktop app: " in st) == noted, f"desktop note only for the app: {entry}: {st}"
     # --park: tmp goes straight to an archive name, never to pending
     write("# Parked task\nstate", path=tmp)
     code, st = park_now(tmp)

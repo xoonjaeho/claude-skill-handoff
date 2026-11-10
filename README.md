@@ -19,7 +19,8 @@ and archives it, so the new session resumes with no action from you.
 - It does **not** run `/clear` or `/compact` itself — built-in commands aren't
   model-invocable. You trigger the compression.
 
-With the hook installed, the full proactive loop is:
+With the hook installed, the full proactive loop is (desktop app: `/clear` there runs no
+hook, so follow it with `/handoff resume` — see Limits):
 
 ```
 /handoff   →   /clear   →   (new context auto-resumes from the handoff)
@@ -36,7 +37,7 @@ keeps a summary safety net. `/handoff` recommends one of the two with a reason; 
 | Command | What it does |
 |---|---|
 | `/handoff` | Write the pre-compression handoff and recommend `/clear` or `/compact <focus>`; you run it. Asks first if one is already pending, and archives it on approval. |
-| `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, so the hook never fired. |
+| `/handoff resume` | Resume from a pending handoff **now**, in this session, and archive it — for when you opened a fresh session instead of `/clear`/`/compact`, or ran `/clear` in the desktop app, so the hook never fired. |
 | `/handoff park` | Write a handoff for **another** session straight to its archive name (never the pending `handoff.md`) and report the filename; open that session with `resume from "<file>"`. |
 | `/handoff discard` | Archive a pending handoff without resuming. |
 
@@ -174,7 +175,8 @@ python scripts/resume.py --selftest      # dispatch / cwd gate / publish / park 
 ```
 
 Expect `selftest ok`. For a full end-to-end check, run `/handoff` in a session, then
-`/clear`, and confirm the new context opens with the handoff content.
+`/clear`, and confirm the new context opens with the handoff content (in the desktop app,
+check with `/compact` instead).
 
 ### 4. Disable / remove
 
@@ -196,10 +198,11 @@ Either:
 - **Directory, not session** — the hook tells sessions apart only by directory. Two
   concurrent sessions in the SAME directory are not distinguished: a `/clear` in either
   within 10 minutes auto-resumes the other's handoff.
-- **Desktop app: `/compact` only** — in the Claude desktop app `/clear` starts no
-  SessionStart, so the hook never runs there (measured; `/compact` does run it).
-  `--publish` adds a note when `CLAUDE_CODE_ENTRYPOINT=claude-desktop`, and the skill
-  then recommends `/compact`; after a `/clear` there, run `/handoff resume`.
+- **Desktop app: `/clear` needs `/handoff resume`** — in the Claude desktop app `/clear`
+  starts no SessionStart, so the hook never runs there (measured; `/compact` does run it).
+  `--publish` adds a note when `CLAUDE_CODE_ENTRYPOINT=claude-desktop`; the skill still
+  picks `/clear` or `/compact` on its merits, and with `/clear` tells you to run
+  `/handoff resume` after it.
 - **Write at the boundary, not ahead** — if you `/handoff` then keep working before
   compressing, the injected handoff is stale. Re-run `/handoff` just before `/clear`.
 

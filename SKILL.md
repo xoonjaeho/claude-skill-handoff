@@ -56,20 +56,26 @@ so the precise state you choose survives either path — then you can use `/clea
      (reasoning, discussion the user may refer back to), or you are unsure what you
      left out. Write the `<focus>` from this session as one line: what the summary must
      keep, including the handoff's content — the hook may not re-inject it.
-   - If `--publish` printed `Desktop app: …`, recommend `/compact <focus>` even when `/clear`
-     would fit: in the desktop app `/clear` does not run the hook.
 
-   Then tell the user, verbatim:
+   If `--publish` printed `Desktop app: …` and you picked `/clear`, tell the user, verbatim:
+   > After `/clear`, run `/handoff resume`. In the desktop app `/clear` does not run the
+   > SessionStart hook, so this handoff is not injected on its own.
+
+   Otherwise tell the user, verbatim:
    > After it, the SessionStart hook (if installed) auto-injects this handoff into the
    > new context and archives the file — I'll resume from it, no action needed (if it
    > is over 10 minutes old or the new session is in another directory, I ask you first). If the
    > hook didn't fire (not installed, or you opened a fresh session instead of
    > `/clear`|`/compact`), run `/handoff resume` to resume from it and archive it.
 
+   If `--publish` printed `Desktop app: …` (so you picked `/compact`), also add, verbatim:
+   > In the desktop app `/clear` does not run the hook — if you run `/clear` instead,
+   > run `/handoff resume` after it.
+
 ### `/handoff resume` — resume from a pending handoff in THIS session
 Use when a handoff was written but the auto-resume hook did NOT fire — e.g. you started a
-fresh session (source=startup) rather than `/clear` or `/compact`, so the hook skipped and
-`handoff.md` still lingers.
+fresh session (source=startup) rather than `/clear` or `/compact`, or ran `/clear` in the
+desktop app, so the hook skipped and `handoff.md` still lingers.
 1. Run the hook in manual mode — it archives the pending handoff (so it can't linger and be
    silently re-injected by a later compression) and prints its content:
    `python "$HOME/.claude/skills/handoff/scripts/resume.py" --consume`
