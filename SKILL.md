@@ -12,7 +12,7 @@ so the precise state you choose survives either path — then you can use `/clea
 (no summary call) instead of `/compact` when the handoff is complete.
 
 ## Why it exists
-- A summary paraphrases: "placed a small order" loses "order 0276917, 293490, 1 share @₩7,600".
+- A summary paraphrases: "placed a small order" loses "order A-1042, 3 items @ $12.50".
 - A summary keeps a decision but drops the *why* → relitigation risk.
 - The handoff holds only what a summary can't be trusted with, read back verbatim.
   It is **selective, not total** — `/compact` stays the option when you're unsure
