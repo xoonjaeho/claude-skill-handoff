@@ -147,15 +147,15 @@ gate on `source` itself):
   "hooks": [
     {
       "type": "command",
-      "command": "python \"%USERPROFILE%\\.claude\\skills\\handoff\\scripts\\resume.py\""
+      "command": "python \"$HOME/.claude/skills/handoff/scripts/resume.py\""
     }
   ]
 }
 ```
 
-> **Note:** the `\\` sequences are JSON string escapes for a single backslash. If your
-> viewer renders them as a single `\`, restore the doubled form when copying into
-> `settings.json` — JSON parsers reject single backslashes.
+> **Note:** Claude Code runs hooks through Git Bash on Windows, so `%USERPROFILE%` is not
+> expanded there; `$HOME` with forward slashes works. Use `python3` instead if that is the
+> interpreter on your PATH.
 
 The hook short-circuits to exit 0 unless the start `source` is `clear`/`compact` *and* a
 pending handoff exists, so it has no effect on ordinary sessions.
@@ -180,10 +180,12 @@ check with `/compact` instead).
 
 ### 4. Disable / remove
 
-Either:
-- Remove the `SessionStart` entry from `settings.json` (the skill still writes handoffs;
-  you resume manually with "read `~/.claude/handoffs/handoff.md` and resume"), or
-- Delete `~/.claude/skills/handoff/`.
+- To keep the skill but stop auto-resume, remove the `SessionStart` entry from
+  `settings.json` (the skill still writes handoffs; you resume manually with
+  "read `~/.claude/handoffs/handoff.md` and resume").
+- To remove it entirely, remove the `SessionStart` entry first, then delete
+  `~/.claude/skills/handoff/`. Deleting the folder alone leaves a hook that fails at every
+  session start. `~/.claude/handoffs/` holds your past handoffs and is left in place.
 
 ## Limits / out-of-scope
 
